@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Simple">
+<meta name="theme-color" content="#0f0f1a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Simple - Fasting & Nutrition</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #0f0f1a;
+  --card: #1a1a2e;
+  --card2: #16213e;
+  --accent: #7c3aed;
+  --accent2: #a855f7;
+  --green: #22c55e;
+  --green-dim: #166534;
+  --red: #ef4444;
+  --orange: #f59e0b;
+  --blue: #3b82f6;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --border: #1e293b;
+  --eating: #22c55e;
+  --fasting: #7c3aed;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 80px;
+  overflow-x: hidden;
+}
+.page { display: none; padding: 20px; padding-top: 16px; max-width: 500px; margin: 0 auto; }
+.page.active { display: block; }
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+.card-sm { padding: 14px 16px; }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  z-index: 100;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 12px;
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 600;
+  transition: color 0.2s;
+  border: none;
+  background: none;
+}
+.nav-item.active { color: var(--accent2); }
+.nav-item svg { width: 24px; height: 24px; }
+
+/* Dashboard */
+.greeting { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+.date-line { color: var(--text2); font-size: 14px; margin-bottom: 20px; }
+.schedule-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+.week-strip {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 500;
+}
+.week-day .num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.week-day.today .num {
+  background: var(--accent);
+  color: white;
+}
+.week-day.has-data .num { border: 2px solid var(--green); }
+
+/* Fasting Mini Card on Dashboard */
+.fast-mini {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+}
+.fast-mini-ring {
+  width: 56px;
+  height: 56px;
+  position: relative;
+  flex-shrink: 0;
+}
+.fast-mini-ring svg { transform: rotate(-90deg); }
+.fast-mini-info { flex: 1; }
+.fast-mini-status {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.fast-mini-status.eating { color: var(--eating); }
+.fast-mini-status.fasting { color: var(--fasting); }
+.fast-mini-time { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fast-mini-sub { font-size: 12px; color: var(--text2); }
+
+/* Nutrition Mini */
+.nutri-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+.nutri-item {
+  flex: 1;
+  text-align: center;
+  background: var(--card2);
+  border-radius: 12px;
+  padding: 12px 4px;
+}
+.nutri-item .val { font-size: 20px; font-weight: 700; }
+.nutri-item .lbl { font-size: 10px; color: var(--text2); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Water Mini */
+.water-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.water-glasses {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.water-glass {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 2px solid var(--blue);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.water-glass.filled { background: var(--blue); border-color: var(--blue); }
+.water-count { font-size: 14px; font-weight: 600; color: var(--blue); white-space: nowrap; }
+
+/* Fasting Page */
+.fast-circle-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0;
+  position: relative;
+}
+.fast-circle {
+  width: 260px;
+  height: 260px;
+  position: relative;
+}
+.fast-circle svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.fast-circle-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.fast-status-label {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.fast-timer {
+  font-size: 44px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.fast-elapsed-label {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 8px;
+}
+.fast-window-info {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+.fast-window-block { text-align: center; }
+.fast-window-block .time { font-size: 18px; font-weight: 700; }
+.fast-window-block .label { font-size: 11px; color: var(--text2); text-transform: uppercase; }
+.fast-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s;
+}
+.fast-btn.start { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+.fast-btn.stop { background: linear-gradient(135deg, var(--red), #dc2626); }
+.fast-btn:active { transform: scale(0.98); opacity: 0.9; }
+.plan-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.plan-chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.plan-chip.active { border-color: var(--accent); background: var(--accent); }
+
+/* Fast History */
+.fast-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.fast-history-item:last-child { border-bottom: none; }
+.fh-date { font-size: 14px; font-weight: 500; }
+.fh-dur { font-size: 14px; color: var(--text2); }
+.fh-check { color: var(--green); font-size: 18px; }
+
+/* Meal Logger */
+.meal-form { display: flex; flex-direction: column; gap: 12px; }
+.meal-form label { font-size: 12px; color: var(--text2); text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }
+.meal-form input, .meal-form select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.meal-form input:focus, .meal-form select:focus { border-color: var(--accent); }
+.meal-form input[type="number"] { -moz-appearance: textfield; }
+.meal-form input::-webkit-outer-spin-button, .meal-form input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.macro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.macro-grid .field { display: flex; flex-direction: column; gap: 4px; }
+.add-meal-btn {
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--green), #16a34a);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.add-meal-btn:active { transform: scale(0.98); }
+
+/* Meal List */
+.meal-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.meal-entry:last-child { border-bottom: none; }
+.meal-name { font-size: 15px; font-weight: 600; }
+.meal-cat { font-size: 11px; color: var(--text2); text-transform: uppercase; }
+.meal-cals { font-size: 15px; font-weight: 700; color: var(--accent2); }
+.meal-macros { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.meal-delete {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  opacity: 0.6;
+}
+.meal-delete:hover { opacity: 1; }
+.meal-time { font-size: 11px; color: var(--text3); }
+
+/* Nutrition Score */
+.score-card {
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--card), var(--card2));
+}
+.score-big { font-size: 56px; font-weight: 800; }
+.score-label { font-size: 16px; font-weight: 600; margin-top: 4px; }
+.score-breakdown { margin-top: 16px; text-align: left; }
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+.score-row .name { font-size: 14px; }
+.score-row .check { font-size: 18px; }
+
+/* Water Page */
+.water-big-count {
+  text-align: center;
+  margin: 20px 0;
+}
+.water-big-num { font-size: 72px; font-weight: 800; color: var(--blue); line-height: 1; }
+.water-big-label { font-size: 16px; color: var(--text2); margin-top: 8px; }
+.water-progress-bar {
+  width: 100%;
+  height: 12px;
+  background: var(--card2);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+.water-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), #60a5fa);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+.water-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 24px 0;
+}
+.water-btn {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  border: 2px solid var(--blue);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  transition: all 0.3s;
+}
+.water-btn.filled { background: var(--blue); border-color: var(--blue); }
+.water-add-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--blue), #2563eb);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.water-add-btn:active { transform: scale(0.98); }
+.water-remove-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* Settings */
+.setting-group { margin-bottom: 20px; }
+.setting-label {
+  font-size: 12px;
+  color: var(--text2);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
+.setting-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+.setting-input:focus { border-color: var(--accent); }
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle {
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--text3);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s;
+  border: none;
+}
+.toggle.on { background: var(--green); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s;
+}
+.toggle.on::after { transform: translateX(20px); }
+.danger-btn {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--red);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--red);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+/* Schedule Card */
+.schedule-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.schedule-item.fast-block { background: rgba(124, 58, 237, 0.15); border-left: 3px solid var(--fasting); }
+.schedule-item.eat-block { background: rgba(34, 197, 94, 0.15); border-left: 3px solid var(--eating); }
+.schedule-item.class-block { background: rgba(59, 130, 246, 0.15); border-left: 3px solid var(--blue); }
+.schedule-item.sleep-block { background: rgba(100, 116, 139, 0.15); border-left: 3px solid var(--text3); }
+.schedule-time { font-weight: 700; min-width: 70px; font-variant-numeric: tabular-nums; }
+.schedule-label { color: var(--text); }
+
+/* Notifications */
+.notif-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--accent);
+  color: white;
+  padding: 12px 20px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 200;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+.notif-banner.show { transform: translateY(0); }
+
+/* Daily totals bar */
+.daily-totals {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+.daily-total-item { text-align: center; }
+.daily-total-item .val { font-size: 16px; font-weight: 700; }
+.daily-total-item .lbl { font-size: 10px; color: var(--text2); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text3); border-radius: 2px; }
+
+/* Animations */
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.pulsing { animation: pulse 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- Notification Banner -->
+<div id="notifBanner" class="notif-banner"></div>
+
+<!-- ============ HOME PAGE ============ -->
+<div id="page-home" class="page active">
+  <div class="greeting" id="greeting">Good morning</div>
+  <div class="date-line" id="dateLine"></div>
+
+  <!-- Week Strip -->
+  <div class="week-strip" id="weekStrip"></div>
+
+  <!-- Today's Schedule -->
+  <div class="card card-sm" id="scheduleCard">
+    <div class="section-title">Today's Schedule</div>
+    <div class="schedule-timeline" id="scheduleTimeline"></div>
+  </div>
+
+  <!-- Fasting Status -->
+  <div class="card card-sm" onclick="switchTab('fast')" style="cursor:pointer">
+    <div class="fast-mini">
+      <div class="fast-mini-ring">
+        <svg viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="24" fill="none" stroke="var(--border)" stroke-width="5"/>
+          <circle id="miniRing" cx="28" cy="28" r="24" fill="none" stroke="var(--accent)" stroke-width="5"
+            stroke-dasharray="150.8" stroke-dashoffset="150.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="fast-mini-info">
+        <div id="miniStatus" class="fast-mini-status fasting">FASTING</div>
+        <div id="miniTimer" class="fast-mini-time">00:00:00</div>
+        <div id="miniSub" class="fast-mini-sub">Eating window at 12:00 PM</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nutrition Summary -->
+  <div class="card card-sm">
+    <div class="section-title">Today's Nutrition</div>
+    <div class="nutri-row">
+      <div class="nutri-item"><div class="val" id="homeCal">0</div><div class="lbl">Calories</div></div>
+      <div class="nutri-item"><div class="val" id="homeProt">0g</div><div class="lbl">Protein</div></div>
+      <div class="nutri-item"><div class="val" id="homeCarb">0g</div><div class="lbl">Carbs</div></div>
+      <div class="nutri-item"><div class="val" id="homeFat">0g</div><div class="lbl">Fat</div></div>
+    </div>
+  </div>
+
+  <!-- Water -->
+  <div class="card card-sm">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="section-title" style="margin:0">Water</div>
+      <div class="water-count" id="homeWaterCount">0 / 8</div>
+    </div>
+    <div class="water-glasses" id="homeWaterGlasses"></div>
+  </div>
+</div>
+
+<!-- ============ FASTING PAGE ============ -->
+<div id="page-fast" class="page">
+  <div class="page-title">Fasting</div>
+
+  <div class="plan-selector" id="planSelector"></div>
+
+  <div class="fast-circle-wrap">
+    <div class="fast-circle">
+      <svg viewBox="0 0 260 260">
+        <circle cx="130" cy="130" r="115" fill="none" stroke="var(--border)" stroke-width="10"/>
+        <circle id="fastRing" cx="130" cy="130" r="115" fill="none" stroke="var(--accent)" stroke-width="10"
+          stroke-dasharray="722.57" stroke-dashoffset="722.57" stroke-linecap="round"/>
+      </svg>
+      <div class="fast-circle-center">
+        <div id="fastStatusLabel" class="fast-status-label" style="color:var(--fasting)">FASTING</div>
+        <div id="fastTimer" class="fast-timer">00:00:00</div>
+        <div id="fastElapsed" class="fast-elapsed-label">remaining</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fast-window-info">
+    <div class="fast-window-block">
+      <div class="label">Fast Start</div>
+      <div class="time" id="fastStartTime">8:00 PM</div>
+    </div>
+    <div class="fast-window-block">
+      <div class="label">Eat Start</div>
+      <div class="time" id="eatStartTime">12:00 PM</div>
+    </div>
+    <div class="fast-window-block">
+      <div class="label">Eat End</div>
+      <div class="time" id="eatEndTime">8:00 PM</div>
+    </div>
+  </div>
+
+  <button id="fastToggleBtn" class="fast-btn start" onclick="toggleFast()">Start Fast</button>
+
+  <div class="card" style="margin-top:20px">
+    <div class="section-title">Fasting History</div>
+    <div id="fastHistory"></div>
+    <div id="noHistory" style="color:var(--text3);font-size:14px;text-align:center;padding:20px">No fasting history yet</div>
+  </div>
+</div>
+
+<!-- ============ MEAL LOG PAGE ============ -->
+<div id="page-log" class="page">
+  <div class="page-title">Log Meal</div>
+
+  <div class="card">
+    <div class="meal-form">
+      <div class="field">
+        <label>Category</label>
+        <select id="mealCategory">
+          <option value="Breakfast">Breakfast</option>
+          <option value="Lunch" selected>Lunch</option>
+          <option value="Dinner">Dinner</option>
+          <option value="Snack">Snack</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Meal Name</label>
+        <input type="text" id="mealName" placeholder="e.g. Grilled chicken salad">
+      </div>
+      <div class="field">
+        <label>Calories</label>
+        <input type="number" id="mealCal" placeholder="0">
+      </div>
+      <div class="macro-grid">
+        <div class="field"><label>Protein (g)</label><input type="number" id="mealProt" placeholder="0"></div>
+        <div class="field"><label>Carbs (g)</label><input type="number" id="mealCarb" placeholder="0"></div>
+        <div class="field"><label>Fat (g)</label><input type="number" id="mealFat" placeholder="0"></div>
+        <div class="field"><label>Fiber (g)</label><input type="number" id="mealFiber" placeholder="0"></div>
+        <div class="field"><label>Sugar (g)</label><input type="number" id="mealSugar" placeholder="0"></div>
+      </div>
+      <button class="add-meal-btn" onclick="addMeal()">+ Add Meal</button>
+    </div>
+  </div>
+
+  <!-- Nutrition Score -->
+  <div id="scoreCard" class="card score-card" style="display:none">
+    <div style="font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Nutrition Score</div>
+    <div id="scoreValue" class="score-big" style="color:var(--green)">0</div>
+    <div id="scoreLabel" class="score-label" style="color:var(--green)">Log meals to see score</div>
+    <div class="score-breakdown" id="scoreBreakdown"></div>
+  </div>
+
+  <!-- Today's Meals -->
+  <div class="card">
+    <div class="section-title">Today's Meals</div>
+    <div id="mealList"></div>
+    <div id="noMeals" style="color:var(--text3);font-size:14px;text-align:center;padding:20px">No meals logged today</div>
+    <div class="daily-totals" id="dailyTotals" style="display:none">
+      <div class="daily-total-item"><div class="val" id="totCal">0</div><div class="lbl">Cal</div></div>
+      <div class="daily-total-item"><div class="val" id="totProt">0g</div><div class="lbl">Prot</div></div>
+      <div class="daily-total-item"><div class="val" id="totCarb">0g</div><div class="lbl">Carbs</div></div>
+      <div class="daily-total-item"><div class="val" id="totFat">0g</div><div class="lbl">Fat</div></div>
+      <div class="daily-total-item"><div class="val" id="totFiber">0g</div><div class="lbl">Fiber</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ WATER PAGE ============ -->
+<div id="page-water" class="page">
+  <div class="page-title">Water Intake</div>
+
+  <div class="card" style="text-align:center">
+    <div class="water-big-count">
+      <div class="water-big-num" id="waterBigNum">0</div>
+      <div class="water-big-label" id="waterBigLabel">of 8 glasses</div>
+    </div>
+    <div class="water-progress-bar">
+      <div class="water-progress-fill" id="waterProgressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="water-grid" id="waterGrid"></div>
+
+  <button class="water-add-btn" onclick="addWater()">+ Add Glass</button>
+  <button class="water-remove-btn" onclick="removeWater()">- Remove Glass</button>
+</div>
+
+<!-- ============ SETTINGS PAGE ============ -->
+<div id="page-settings" class="page">
+  <div class="page-title">Settings</div>
+
+  <div class="card">
+    <div class="setting-group">
+      <div class="setting-label">Your Name</div>
+      <input class="setting-input" id="setName" placeholder="David" oninput="saveSettings()">
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Daily Calorie Goal</div>
+      <input class="setting-input" id="setCalGoal" type="number" placeholder="2000" oninput="saveSettings()">
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Water Target (glasses)</div>
+      <input class="setting-input" id="setWaterTarget" type="number" placeholder="8" oninput="saveSettings()">
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Eating Window Start (24h)</div>
+      <input class="setting-input" id="setEatStart" type="time" value="12:00" onchange="saveSettings()">
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Eating Window End (24h)</div>
+      <input class="setting-input" id="setEatEnd" type="time" value="20:00" onchange="saveSettings()">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Notifications</div>
+    <div class="setting-row">
+      <span>Fasting Reminders</span>
+      <button class="toggle on" id="togFast" onclick="toggleSetting(this,'notifFasting')"></button>
+    </div>
+    <div class="setting-row">
+      <span>Meal Reminders</span>
+      <button class="toggle on" id="togMeal" onclick="toggleSetting(this,'notifMeals')"></button>
+    </div>
+    <div class="setting-row">
+      <span>Water Reminders</span>
+      <button class="toggle on" id="togWater" onclick="toggleSetting(this,'notifWater')"></button>
+    </div>
+    <div class="setting-row">
+      <span>Sound Alarms</span>
+      <button class="toggle on" id="togSound" onclick="toggleSetting(this,'soundAlarms')"></button>
+    </div>
+    <div style="padding-top:12px">
+      <button class="fast-btn start" onclick="requestNotifPermission()" style="font-size:14px;padding:12px">Enable Browser Notifications</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Data</div>
+    <button class="danger-btn" onclick="exportData()">Export Data (JSON)</button>
+    <button class="danger-btn" onclick="if(confirm('Clear ALL data? This cannot be undone.')){localStorage.clear();location.reload();}">Clear All Data</button>
+  </div>
+
+  <div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">
+    Simple Clone v1.0 - Personal Use Only
+  </div>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchTab('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('fast')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>Fast</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    <span>Log</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('water')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+    <span>Water</span>
+  </button>
+  <button class="nav-item" onclick="switchTab('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<script>
+// ===== DATA LAYER =====
+const today = () => new Date().toISOString().split('T')[0];
+
+function getData(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch { return fallback; }
+}
+function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+function getSettings() {
+  return getData('settings', {
+    name: 'David',
+    calorieGoal: 2000,
+    waterTarget: 8,
+    eatStart: '12:00',
+    eatEnd: '20:00',
+    fastingPlan: '16:8',
+    notifFasting: true,
+    notifMeals: true,
+    notifWater: true,
+    soundAlarms: true
+  });
+}
+
+function getMeals(date) { return getData('meals_' + (date || today()), []); }
+function saveMeals(meals, date) { setData('meals_' + (date || today()), meals); }
+function getWater(date) { return getData('water_' + (date || today()), 0); }
+function setWater(count, date) { setData('water_' + (date || today()), count); }
+function getFastState() { return getData('fastState', { active: false, startTime: null, plan: '16:8' }); }
+function setFastState(s) { setData('fastState', s); }
+function getFastHistory() { return getData('fastHistory', []); }
+function addFastHistory(entry) { const h = getFastHistory(); h.unshift(entry); if(h.length > 50) h.pop(); setData('fastHistory', h); }
+
+// ===== SCHEDULE =====
+const SCHEDULE = {
+  0: { label: 'Sunday', classes: [], wake: '10:30', sleep: '02:00' },
+  1: { label: 'Monday', classes: [{ start: '07:00', end: '11:30' }], wake: '06:00', sleep: '00:00' },
+  2: { label: 'Tuesday', classes: [], wake: '10:30', sleep: '02:00' },
+  3: { label: 'Wednesday', classes: [{ start: '07:00', end: '11:30' }, { start: '12:00', end: '17:20' }], wake: '06:00', sleep: '00:00' },
+  4: { label: 'Thursday', classes: [{ start: '11:15', end: '16:30' }], wake: '10:15', sleep: '00:00' },
+  5: { label: 'Friday', classes: [{ start: '07:00', end: '11:30' }], wake: '06:00', sleep: '00:00' },
+  6: { label: 'Saturday', classes: [], wake: '10:30', sleep: '02:00' }
+};
+
+function getTodaySchedule() {
+  const dow = new Date().getDay();
+  return SCHEDULE[dow];
+}
+
+// ===== FASTING PLANS =====
+const PLANS = {
+  '16:8': { fast: 16, eat: 8 },
+  '18:6': { fast: 18, eat: 6 },
+  '20:4': { fast: 20, eat: 4 },
+  '14:10': { fast: 14, eat: 10 }
+};
+
+// ===== NAVIGATION =====
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.querySelectorAll('.nav-item')[['home','fast','log','water','settings'].indexOf(tab)].classList.add('active');
+  if (tab === 'home') renderHome();
+  if (tab === 'fast') renderFasting();
+  if (tab === 'log') renderMeals();
+  if (tab === 'water') renderWater();
+  if (tab === 'settings') renderSettings();
+}
+
+// ===== HOME PAGE =====
+function renderHome() {
+  const s = getSettings();
+  const now = new Date();
+  const hour = now.getHours();
+  let greet = 'Good evening';
+  if (hour < 12) greet = 'Good morning';
+  else if (hour < 17) greet = 'Good afternoon';
+  document.getElementById('greeting').textContent = greet + ', ' + (s.name || 'David');
+
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('dateLine').textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate();
+
+  renderWeekStrip();
+  renderScheduleCard();
+  updateFastMini();
+  updateHomeNutrition();
+  renderHomeWater();
+}
+
+function renderWeekStrip() {
+  const now = new Date();
+  const dow = now.getDay();
+  const strip = document.getElementById('weekStrip');
+  strip.innerHTML = '';
+  const labels = ['S','M','T','W','T','F','S'];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - dow + i);
+    const isToday = d.toDateString() === now.toDateString();
+    const dateStr = d.toISOString().split('T')[0];
+    const hasMeals = getMeals(dateStr).length > 0;
+    const div = document.createElement('div');
+    div.className = 'week-day' + (isToday ? ' today' : '') + (hasMeals ? ' has-data' : '');
+    div.innerHTML = `<span>${labels[i]}</span><span class="num">${d.getDate()}</span>`;
+    strip.appendChild(div);
+  }
+}
+
+function renderScheduleCard() {
+  const sched = getTodaySchedule();
+  const s = getSettings();
+  const timeline = document.getElementById('scheduleTimeline');
+  const items = [];
+
+  // Wake
+  items.push({ time: sched.wake, label: 'Wake up', type: 'sleep-block' });
+
+  // Classes
+  sched.classes.forEach(c => {
+    items.push({ time: c.start, label: 'Class', type: 'class-block', end: c.end });
+  });
+
+  // Eating window
+  items.push({ time: s.eatStart, label: 'Eating window opens', type: 'eat-block' });
+  items.push({ time: s.eatEnd, label: 'Fasting begins', type: 'fast-block' });
+
+  // Sleep
+  items.push({ time: sched.sleep, label: 'Bedtime', type: 'sleep-block' });
+
+  // Sort by time (handle next-day times like 02:00)
+  items.sort((a, b) => {
+    const ta = parseInt(a.time.replace(':',''));
+    const tb = parseInt(b.time.replace(':',''));
+    const adjA = ta < 400 ? ta + 2400 : ta;
+    const adjB = tb < 400 ? tb + 2400 : tb;
+    return adjA - adjB;
+  });
+
+  timeline.innerHTML = items.map(item => {
+    const endStr = item.end ? ' - ' + formatTime24to12(item.end) : '';
+    return `<div class="schedule-item ${item.type}">
+      <span class="schedule-time">${formatTime24to12(item.time)}${endStr}</span>
+      <span class="schedule-label">${item.label}</span>
+    </div>`;
+  }).join('');
+}
+
+function formatTime24to12(t) {
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+}
+
+function updateHomeNutrition() {
+  const meals = getMeals();
+  let cal = 0, prot = 0, carb = 0, fat = 0;
+  meals.forEach(m => {
+    cal += m.calories || 0;
+    prot += m.protein || 0;
+    carb += m.carbs || 0;
+    fat += m.fat || 0;
+  });
+  document.getElementById('homeCal').textContent = cal;
+  document.getElementById('homeProt').textContent = prot + 'g';
+  document.getElementById('homeCarb').textContent = carb + 'g';
+  document.getElementById('homeFat').textContent = fat + 'g';
+}
+
+function renderHomeWater() {
+  const s = getSettings();
+  const count = getWater();
+  const target = s.waterTarget || 8;
+  document.getElementById('homeWaterCount').textContent = count + ' / ' + target;
+  const container = document.getElementById('homeWaterGlasses');
+  container.innerHTML = '';
+  for (let i = 0; i < target; i++) {
+    const g = document.createElement('div');
+    g.className = 'water-glass' + (i < count ? ' filled' : '');
+    g.textContent = i < count ? '💧' : '';
+    g.onclick = () => { setWater(i + 1); renderHomeWater(); renderWater(); };
+    container.appendChild(g);
+  }
+}
+
+// ===== FASTING =====
+let fastInterval = null;
+
+function renderFasting() {
+  const s = getSettings();
+  const state = getFastState();
+
+  // Plan selector
+  const selector = document.getElementById('planSelector');
+  selector.innerHTML = Object.keys(PLANS).map(p =>
+    `<button class="plan-chip ${state.plan === p ? 'active' : ''}" onclick="selectPlan('${p}')">${p}</button>`
+  ).join('');
+
+  // Window times
+  document.getElementById('eatStartTime').textContent = formatTime24to12(s.eatStart);
+  document.getElementById('eatEndTime').textContent = formatTime24to12(s.eatEnd);
+  document.getElementById('fastStartTime').textContent = formatTime24to12(s.eatEnd);
+
+  // Button state
+  const btn = document.getElementById('fastToggleBtn');
+  if (state.active) {
+    btn.textContent = 'End Fast';
+    btn.className = 'fast-btn stop';
+  } else {
+    btn.textContent = 'Start Fast';
+    btn.className = 'fast-btn start';
+  }
+
+  // History
+  renderFastHistory();
+
+  // Start timer updates
+  updateFastDisplay();
+}
+
+function selectPlan(plan) {
+  const state = getFastState();
+  state.plan = plan;
+  setFastState(state);
+
+  // Update eating window based on plan
+  const planData = PLANS[plan];
+  const s = getSettings();
+  // Keep eat end at 8pm, adjust eat start based on eating hours
+  const eatEndH = parseInt(s.eatEnd.split(':')[0]);
+  const eatStartH = eatEndH - planData.eat;
+  s.eatStart = String(eatStartH).padStart(2, '0') + ':00';
+  setData('settings', s);
+
+  renderFasting();
+}
+
+function toggleFast() {
+  const state = getFastState();
+  if (state.active) {
+    // End fast
+    const duration = Date.now() - state.startTime;
+    const hours = duration / (1000 * 60 * 60);
+    const planHours = PLANS[state.plan]?.fast || 16;
+    addFastHistory({
+      date: today(),
+      duration: Math.round(hours * 10) / 10,
+      plan: state.plan,
+      completed: hours >= planHours,
+      endTime: Date.now()
+    });
+    state.active = false;
+    state.startTime = null;
+    setFastState(state);
+    showNotif('Fast ended! Duration: ' + Math.round(hours * 10) / 10 + ' hours');
+    playAlarm();
+  } else {
+    // Start fast
+    state.active = true;
+    state.startTime = Date.now();
+    setFastState(state);
+    showNotif('Fast started! Stay strong 💪');
+    playAlarm();
+  }
+  renderFasting();
+  updateFastMini();
+}
+
+function updateFastDisplay() {
+  const state = getFastState();
+  const s = getSettings();
+  const planData = PLANS[state.plan] || PLANS['16:8'];
+
+  if (state.active && state.startTime) {
+    const elapsed = Date.now() - state.startTime;
+    const totalFastMs = planData.fast * 60 * 60 * 1000;
+    const remaining = Math.max(0, totalFastMs - elapsed);
+    const progress = Math.min(1, elapsed / totalFastMs);
+
+    // Check if fast is in eating window
+    const elapsedHours = elapsed / (1000 * 60 * 60);
+    const inEating = elapsedHours >= planData.fast;
+
+    if (inEating) {
+      // Eating phase
+      const eatMs = planData.eat * 60 * 60 * 1000;
+      const eatElapsed = elapsed - totalFastMs;
+      const eatRemaining = Math.max(0, eatMs - eatElapsed);
+      const eatProgress = Math.min(1, eatElapsed / eatMs);
+
+      setFastUI('EATING', formatMs(eatRemaining), eatProgress, 'var(--eating)', 'until fasting');
+    } else {
+      setFastUI('FASTING', formatMs(remaining), progress, 'var(--fasting)', 'remaining');
+    }
+  } else {
+    // Not active - show current window state based on time
+    const now = new Date();
+    const [eatStartH, eatStartM] = s.eatStart.split(':').map(Number);
+    const [eatEndH, eatEndM] = s.eatEnd.split(':').map(Number);
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    const eatStartMins = eatStartH * 60 + eatStartM;
+    const eatEndMins = eatEndH * 60 + eatEndM;
+
+    const inEatingWindow = nowMins >= eatStartMins && nowMins < eatEndMins;
+
+    if (inEatingWindow) {
+      const minsLeft = eatEndMins - nowMins;
+      setFastUI('EATING WINDOW', formatMins(minsLeft), (nowMins - eatStartMins) / (eatEndMins - eatStartMins), 'var(--eating)', 'until fasting');
+    } else {
+      let minsToEat;
+      if (nowMins < eatStartMins) {
+        minsToEat = eatStartMins - nowMins;
+      } else {
+        minsToEat = (24 * 60 - nowMins) + eatStartMins;
+      }
+      const totalFastMins = 24 * 60 - (eatEndMins - eatStartMins);
+      let fastElapsedMins;
+      if (nowMins >= eatEndMins) {
+        fastElapsedMins = nowMins - eatEndMins;
+      } else {
+        fastElapsedMins = (24 * 60 - eatEndMins) + nowMins;
+      }
+      setFastUI('FASTING WINDOW', formatMins(minsToEat), fastElapsedMins / totalFastMins, 'var(--fasting)', 'until eating');
+    }
+  }
+}
+
+function setFastUI(status, time, progress, color, sublabel) {
+  // Main page
+  const ring = document.getElementById('fastRing');
+  const circ = 2 * Math.PI * 115;
+  ring.style.stroke = color;
+  ring.style.strokeDashoffset = circ * (1 - progress);
+
+  document.getElementById('fastStatusLabel').textContent = status;
+  document.getElementById('fastStatusLabel').style.color = color;
+  document.getElementById('fastTimer').textContent = time;
+  document.getElementById('fastElapsed').textContent = sublabel;
+
+  // Mini on home
+  const miniRing = document.getElementById('miniRing');
+  const miniCirc = 2 * Math.PI * 24;
+  miniRing.style.stroke = color;
+  miniRing.style.strokeDashoffset = miniCirc * (1 - progress);
+
+  const isFasting = status.includes('FAST');
+  document.getElementById('miniStatus').textContent = isFasting ? 'FASTING' : 'EATING';
+  document.getElementById('miniStatus').className = 'fast-mini-status ' + (isFasting ? 'fasting' : 'eating');
+  document.getElementById('miniTimer').textContent = time;
+  document.getElementById('miniSub').textContent = sublabel;
+}
+
+function formatMs(ms) {
+  const totalSecs = Math.floor(ms / 1000);
+  const h = Math.floor(totalSecs / 3600);
+  const m = Math.floor((totalSecs % 3600) / 60);
+  const sec = totalSecs % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function formatMins(mins) {
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':00';
+}
+
+function updateFastMini() {
+  updateFastDisplay();
+}
+
+function renderFastHistory() {
+  const history = getFastHistory();
+  const container = document.getElementById('fastHistory');
+  const noHist = document.getElementById('noHistory');
+
+  if (history.length === 0) {
+    container.innerHTML = '';
+    noHist.style.display = 'block';
+    return;
+  }
+  noHist.style.display = 'none';
+  container.innerHTML = history.slice(0, 10).map(h => `
+    <div class="fast-history-item">
+      <div>
+        <div class="fh-date">${h.date}</div>
+        <div class="fh-dur">${h.duration}h (${h.plan})</div>
+      </div>
+      <div class="fh-check">${h.completed ? '✅' : '⚠️'}</div>
+    </div>
+  `).join('');
+}
+
+// ===== MEALS =====
+function addMeal() {
+  const name = document.getElementById('mealName').value.trim();
+  if (!name) { showNotif('Please enter a meal name'); return; }
+
+  const meal = {
+    id: Date.now(),
+    category: document.getElementById('mealCategory').value,
+    name: name,
+    calories: parseInt(document.getElementById('mealCal').value) || 0,
+    protein: parseInt(document.getElementById('mealProt').value) || 0,
+    carbs: parseInt(document.getElementById('mealCarb').value) || 0,
+    fat: parseInt(document.getElementById('mealFat').value) || 0,
+    fiber: parseInt(document.getElementById('mealFiber').value) || 0,
+    sugar: parseInt(document.getElementById('mealSugar').value) || 0,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  const meals = getMeals();
+  meals.push(meal);
+  saveMeals(meals);
+
+  // Clear form
+  document.getElementById('mealName').value = '';
+  document.getElementById('mealCal').value = '';
+  document.getElementById('mealProt').value = '';
+  document.getElementById('mealCarb').value = '';
+  document.getElementById('mealFat').value = '';
+  document.getElementById('mealFiber').value = '';
+  document.getElementById('mealSugar').value = '';
+
+  showNotif('Meal logged!');
+  renderMeals();
+}
+
+function deleteMeal(id) {
+  let meals = getMeals();
+  meals = meals.filter(m => m.id !== id);
+  saveMeals(meals);
+  renderMeals();
+}
+
+function renderMeals() {
+  const meals = getMeals();
+  const list = document.getElementById('mealList');
+  const noMeals = document.getElementById('noMeals');
+  const totals = document.getElementById('dailyTotals');
+
+  if (meals.length === 0) {
+    list.innerHTML = '';
+    noMeals.style.display = 'block';
+    totals.style.display = 'none';
+    document.getElementById('scoreCard').style.display = 'none';
+    return;
+  }
+
+  noMeals.style.display = 'none';
+  totals.style.display = 'flex';
+  document.getElementById('scoreCard').style.display = 'block';
+
+  list.innerHTML = meals.map(m => `
+    <div class="meal-entry">
+      <div style="flex:1">
+        <div class="meal-name">${m.name}</div>
+        <div class="meal-cat">${m.category} &middot; ${m.time}</div>
+        <div class="meal-macros">P:${m.protein}g C:${m.carbs}g F:${m.fat}g Fiber:${m.fiber}g</div>
+      </div>
+      <div style="text-align:right">
+        <div class="meal-cals">${m.calories} cal</div>
+        <button class="meal-delete" onclick="deleteMeal(${m.id})">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Totals
+  let tCal = 0, tProt = 0, tCarb = 0, tFat = 0, tFiber = 0;
+  meals.forEach(m => {
+    tCal += m.calories || 0;
+    tProt += m.protein || 0;
+    tCarb += m.carbs || 0;
+    tFat += m.fat || 0;
+    tFiber += m.fiber || 0;
+  });
+  document.getElementById('totCal').textContent = tCal;
+  document.getElementById('totProt').textContent = tProt + 'g';
+  document.getElementById('totCarb').textContent = tCarb + 'g';
+  document.getElementById('totFat').textContent = tFat + 'g';
+  document.getElementById('totFiber').textContent = tFiber + 'g';
+
+  // Nutrition Score
+  calcNutritionScore(meals);
+}
+
+function calcNutritionScore(meals) {
+  if (meals.length === 0) return;
+
+  let totalScore = 0;
+  const checks = { protein: 0, sugar: 0, fiber: 0, calories: 0 };
+
+  meals.forEach(m => {
+    let s = 0;
+    // Protein: +25 if >= 20g
+    const protScore = Math.min(25, (m.protein / 20) * 25);
+    s += protScore;
+    if (m.protein >= 20) checks.protein++;
+
+    // Sugar: +25 if <= 10g
+    const sugarScore = m.sugar <= 10 ? 25 : Math.max(0, 25 - (m.sugar - 10) * 2.5);
+    s += sugarScore;
+    if (m.sugar <= 10) checks.sugar++;
+
+    // Fiber: +25 if >= 5g
+    const fiberScore = Math.min(25, (m.fiber / 5) * 25);
+    s += fiberScore;
+    if (m.fiber >= 5) checks.fiber++;
+
+    // Calorie density: +25 if 200-600
+    let calScore = 25;
+    if (m.calories < 100) calScore = 10;
+    else if (m.calories > 800) calScore = 5;
+    else if (m.calories > 600) calScore = 15;
+    s += calScore;
+    if (m.calories >= 200 && m.calories <= 600) checks.calories++;
+
+    totalScore += s;
+  });
+
+  const avgScore = Math.round(totalScore / meals.length);
+
+  let label, color;
+  if (avgScore >= 80) { label = 'Optimal'; color = 'var(--green)'; }
+  else if (avgScore >= 60) { label = 'Good'; color = '#22d3ee'; }
+  else if (avgScore >= 40) { label = 'Fair'; color = 'var(--orange)'; }
+  else { label = 'Needs Improvement'; color = 'var(--red)'; }
+
+  document.getElementById('scoreValue').textContent = avgScore;
+  document.getElementById('scoreValue').style.color = color;
+  document.getElementById('scoreLabel').textContent = label;
+  document.getElementById('scoreLabel').style.color = color;
+
+  document.getElementById('scoreBreakdown').innerHTML = `
+    <div class="score-row"><span class="name">High in protein</span><span class="check">${checks.protein >= meals.length * 0.5 ? '✅' : '❌'}</span></div>
+    <div class="score-row"><span class="name">Low in sugar</span><span class="check">${checks.sugar >= meals.length * 0.5 ? '✅' : '❌'}</span></div>
+    <div class="score-row"><span class="name">High in fiber</span><span class="check">${checks.fiber >= meals.length * 0.5 ? '✅' : '❌'}</span></div>
+    <div class="score-row"><span class="name">Balanced portions</span><span class="check">${checks.calories >= meals.length * 0.5 ? '✅' : '❌'}</span></div>
+  `;
+}
+
+// ===== WATER =====
+function renderWater() {
+  const s = getSettings();
+  const count = getWater();
+  const target = s.waterTarget || 8;
+
+  document.getElementById('waterBigNum').textContent = count;
+  document.getElementById('waterBigLabel').textContent = 'of ' + target + ' glasses';
+  document.getElementById('waterProgressFill').style.width = Math.min(100, (count / target) * 100) + '%';
+
+  const grid = document.getElementById('waterGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < target; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'water-btn' + (i < count ? ' filled' : '');
+    btn.textContent = i < count ? '💧' : '';
+    btn.onclick = () => { setWater(i + 1); renderWater(); renderHomeWater(); };
+    grid.appendChild(btn);
+  }
+}
+
+function addWater() {
+  const s = getSettings();
+  const count = getWater();
+  const target = s.waterTarget || 8;
+  if (count < target) {
+    setWater(count + 1);
+    if (count + 1 === target) {
+      showNotif('Water goal reached! Great job!');
+      playAlarm();
+    }
+  }
+  renderWater();
+  renderHomeWater();
+}
+
+function removeWater() {
+  const count = getWater();
+  if (count > 0) setWater(count - 1);
+  renderWater();
+  renderHomeWater();
+}
+
+// ===== SETTINGS =====
+function renderSettings() {
+  const s = getSettings();
+  document.getElementById('setName').value = s.name || '';
+  document.getElementById('setCalGoal').value = s.calorieGoal || 2000;
+  document.getElementById('setWaterTarget').value = s.waterTarget || 8;
+  document.getElementById('setEatStart').value = s.eatStart || '12:00';
+  document.getElementById('setEatEnd').value = s.eatEnd || '20:00';
+
+  document.getElementById('togFast').className = 'toggle' + (s.notifFasting !== false ? ' on' : '');
+  document.getElementById('togMeal').className = 'toggle' + (s.notifMeals !== false ? ' on' : '');
+  document.getElementById('togWater').className = 'toggle' + (s.notifWater !== false ? ' on' : '');
+  document.getElementById('togSound').className = 'toggle' + (s.soundAlarms !== false ? ' on' : '');
+}
+
+function saveSettings() {
+  const s = getSettings();
+  s.name = document.getElementById('setName').value;
+  s.calorieGoal = parseInt(document.getElementById('setCalGoal').value) || 2000;
+  s.waterTarget = parseInt(document.getElementById('setWaterTarget').value) || 8;
+  s.eatStart = document.getElementById('setEatStart').value || '12:00';
+  s.eatEnd = document.getElementById('setEatEnd').value || '20:00';
+  setData('settings', s);
+}
+
+function toggleSetting(btn, key) {
+  const s = getSettings();
+  s[key] = !s[key];
+  setData('settings', s);
+  btn.className = 'toggle' + (s[key] ? ' on' : '');
+}
+
+function exportData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    data[key] = getData(key, null);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'simple-data-' + today() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===== NOTIFICATIONS & ALARMS =====
+function requestNotifPermission() {
+  if ('Notification' in window) {
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') showNotif('Notifications enabled!');
+      else showNotif('Notifications blocked - please enable in browser settings');
+    });
+  } else {
+    showNotif('Notifications not supported in this browser');
+  }
+}
+
+function sendNotification(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '🍎' });
+  }
+}
+
+function showNotif(msg) {
+  const banner = document.getElementById('notifBanner');
+  banner.textContent = msg;
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 3000);
+}
+
+// Audio alarm using Web Audio API
+function playAlarm() {
+  const s = getSettings();
+  if (s.soundAlarms === false) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const playTone = (freq, start, dur) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur);
+    };
+    playTone(523.25, 0, 0.15);
+    playTone(659.25, 0.2, 0.15);
+    playTone(783.99, 0.4, 0.3);
+  } catch (e) { /* audio not available */ }
+}
+
+// ===== SCHEDULED NOTIFICATIONS =====
+function checkScheduledNotifs() {
+  const s = getSettings();
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const nowStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  // Track what we've already notified this minute
+  const notifKey = 'lastNotif_' + today();
+  const lastNotifs = getData(notifKey, []);
+
+  function notify(id, title, body) {
+    if (lastNotifs.includes(id)) return;
+    lastNotifs.push(id);
+    setData(notifKey, lastNotifs);
+    sendNotification(title, body);
+    showNotif(body);
+    playAlarm();
+  }
+
+  // Fasting notifications
+  if (s.notifFasting !== false) {
+    const [eatStartH, eatStartM] = s.eatStart.split(':').map(Number);
+    const [eatEndH, eatEndM] = s.eatEnd.split(':').map(Number);
+    const eatStartMins = eatStartH * 60 + eatStartM;
+    const eatEndMins = eatEndH * 60 + eatEndM;
+
+    if (nowMins === eatStartMins) {
+      notify('eat_start', 'Eating Window Open!', 'Your eating window is now open. Time to eat!');
+    }
+    if (nowMins === eatEndMins) {
+      notify('fast_start', 'Fasting Begins!', 'Your eating window is closed. Fasting starts now.');
+    }
+    // 30 min warning before fasting
+    if (nowMins === eatEndMins - 30) {
+      notify('fast_warn', 'Heads Up!', 'Eating window closes in 30 minutes.');
+    }
+  }
+
+  // Water reminders (every 2 hours during eating window)
+  if (s.notifWater !== false) {
+    const [eatStartH] = s.eatStart.split(':').map(Number);
+    const [eatEndH] = s.eatEnd.split(':').map(Number);
+    const waterCount = getWater();
+    const target = s.waterTarget || 8;
+    if (nowMins % 120 === 0 && now.getHours() >= eatStartH && now.getHours() < eatEndH && waterCount < target) {
+      notify('water_' + now.getHours(), 'Drink Water!', `You've had ${waterCount}/${target} glasses. Stay hydrated!`);
+    }
+  }
+
+  // Meal reminders
+  if (s.notifMeals !== false) {
+    const meals = getMeals();
+    const mealTimes = { '12:00': 'Lunch', '15:00': 'Snack', '18:00': 'Dinner' };
+    if (mealTimes[nowStr]) {
+      const hasMealInCategory = meals.some(m =>
+        m.category === mealTimes[nowStr] || m.category === 'Snack'
+      );
+      if (!hasMealInCategory) {
+        notify('meal_' + nowStr, 'Time to Eat!', `It's ${mealTimes[nowStr].toLowerCase()} time. Don't forget to log your meal!`);
+      }
+    }
+  }
+}
+
+// ===== MAIN TIMER LOOP =====
+function startTimerLoop() {
+  setInterval(() => {
+    updateFastDisplay();
+  }, 1000);
+
+  // Check notifications every 60 seconds
+  setInterval(checkScheduledNotifs, 60000);
+  checkScheduledNotifs(); // Check immediately
+}
+
+// ===== INIT =====
+function init() {
+  renderHome();
+  renderFasting();
+  renderMeals();
+  renderWater();
+  renderSettings();
+  startTimerLoop();
+
+  // Request notification permission on first load
+  if ('Notification' in window && Notification.permission === 'default') {
+    setTimeout(() => {
+      showNotif('Enable notifications for meal & fasting reminders!');
+    }, 2000);
+  }
+}
+
+init();
+
+// Register Service Worker for PWA / offline
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
