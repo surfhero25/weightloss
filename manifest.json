@@ -2,7 +2,7 @@
   "name": "Simple - Fasting & Nutrition",
   "short_name": "Simple",
   "description": "Personal fasting timer, meal logger, and nutrition tracker",
-  "start_url": "/weightloss/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0f0f1a",
   "theme_color": "#0f0f1a",

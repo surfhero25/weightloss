@@ -866,12 +866,20 @@ function addFastHistory(entry) { const h = getFastHistory(); h.unshift(entry); i
 
 // ===== SCHEDULE =====
 const SCHEDULE = {
-  0: { label: 'Sunday', classes: [], wake: '10:30', sleep: '02:00' },
-  1: { label: 'Monday', classes: [{ start: '07:00', end: '11:30' }], wake: '06:00', sleep: '00:00' },
-  2: { label: 'Tuesday', classes: [], wake: '10:30', sleep: '02:00' },
-  3: { label: 'Wednesday', classes: [{ start: '07:00', end: '11:30' }, { start: '12:00', end: '17:20' }], wake: '06:00', sleep: '00:00' },
+  // Sleep time = bedtime TONIGHT (based on what's needed TOMORROW)
+  // Sun night: bed midnight, Mon class at 7am -> wake 6am
+  0: { label: 'Sunday', classes: [], wake: '10:30', sleep: '00:00' },
+  // Mon night: Tue free -> stay up late
+  1: { label: 'Monday', classes: [{ start: '07:00', end: '11:30' }], wake: '06:00', sleep: '02:00' },
+  // Tue night: Wed class at 7am -> bed midnight, wake 6am
+  2: { label: 'Tuesday', classes: [], wake: '10:30', sleep: '00:00' },
+  // Wed night: Thu class at 11:15 -> stay up later, wake ~10am
+  3: { label: 'Wednesday', classes: [{ start: '07:00', end: '11:30' }, { start: '12:00', end: '17:20' }], wake: '06:00', sleep: '02:00' },
+  // Thu night: Fri class at 7am -> bed midnight, wake 6am
   4: { label: 'Thursday', classes: [{ start: '11:15', end: '16:30' }], wake: '10:15', sleep: '00:00' },
-  5: { label: 'Friday', classes: [{ start: '07:00', end: '11:30' }], wake: '06:00', sleep: '00:00' },
+  // Fri night: Sat free -> stay up late
+  5: { label: 'Friday', classes: [{ start: '07:00', end: '11:30' }], wake: '06:00', sleep: '02:00' },
+  // Sat night: Sun free -> stay up late
   6: { label: 'Saturday', classes: [], wake: '10:30', sleep: '02:00' }
 };
 
