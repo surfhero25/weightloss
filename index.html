@@ -555,6 +555,52 @@ body {
 .daily-total-item .val { font-size: 16px; font-weight: 700; }
 .daily-total-item .lbl { font-size: 10px; color: var(--text2); }
 
+/* Quick Pick / Food Search */
+.quick-pick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.quick-pick-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+.quick-pick-btn:active { transform: scale(0.97); border-color: var(--accent); }
+.quick-pick-btn .emoji { font-size: 24px; }
+.quick-pick-btn .info { flex: 1; min-width: 0; }
+.quick-pick-btn .name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quick-pick-btn .cals { font-size: 11px; color: var(--text2); }
+.search-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.search-result:active { background: var(--card2); }
+.search-result:last-child { border-bottom: none; }
+.search-result .emoji { font-size: 22px; flex-shrink: 0; }
+.search-result .info { flex: 1; }
+.search-result .name { font-size: 14px; font-weight: 600; }
+.search-result .detail { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.search-result .cal-badge {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent2);
+  white-space: nowrap;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -672,33 +718,53 @@ body {
 <div id="page-log" class="page">
   <div class="page-title">Log Meal</div>
 
+  <!-- Quick Search -->
   <div class="card">
-    <div class="meal-form">
-      <div class="field">
-        <label>Category</label>
-        <select id="mealCategory">
-          <option value="Breakfast">Breakfast</option>
-          <option value="Lunch" selected>Lunch</option>
-          <option value="Dinner">Dinner</option>
-          <option value="Snack">Snack</option>
-        </select>
+    <div class="field" style="margin-bottom:12px">
+      <label style="font-size:12px;color:var(--text2);text-transform:uppercase;font-weight:600;letter-spacing:0.3px;display:block;margin-bottom:6px">What did you eat?</label>
+      <input type="text" id="foodSearch" class="setting-input" placeholder="Search... burger, pizza, sandwich, coffee" oninput="searchFood()" autocomplete="off">
+    </div>
+    <div id="searchResults" style="display:none;max-height:280px;overflow-y:auto"></div>
+    <div id="quickPicks">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;font-weight:600;letter-spacing:0.3px">Common picks</div>
+      <div id="quickPickGrid" class="quick-pick-grid"></div>
+    </div>
+  </div>
+
+  <!-- Manual Entry (collapsed by default) -->
+  <div class="card" id="manualEntryCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleManualEntry()">
+      <div class="section-title" style="margin:0">Custom Entry</div>
+      <span id="manualToggle" style="color:var(--text2);font-size:20px">+</span>
+    </div>
+    <div id="manualForm" style="display:none;margin-top:16px">
+      <div class="meal-form">
+        <div class="field">
+          <label>Category</label>
+          <select id="mealCategory">
+            <option value="Breakfast">Breakfast</option>
+            <option value="Lunch" selected>Lunch</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Snack">Snack</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Meal Name</label>
+          <input type="text" id="mealName" placeholder="e.g. Grilled chicken salad">
+        </div>
+        <div class="field">
+          <label>Calories</label>
+          <input type="number" id="mealCal" placeholder="0">
+        </div>
+        <div class="macro-grid">
+          <div class="field"><label>Protein (g)</label><input type="number" id="mealProt" placeholder="0"></div>
+          <div class="field"><label>Carbs (g)</label><input type="number" id="mealCarb" placeholder="0"></div>
+          <div class="field"><label>Fat (g)</label><input type="number" id="mealFat" placeholder="0"></div>
+          <div class="field"><label>Fiber (g)</label><input type="number" id="mealFiber" placeholder="0"></div>
+          <div class="field"><label>Sugar (g)</label><input type="number" id="mealSugar" placeholder="0"></div>
+        </div>
+        <button class="add-meal-btn" onclick="addMeal()">+ Add Meal</button>
       </div>
-      <div class="field">
-        <label>Meal Name</label>
-        <input type="text" id="mealName" placeholder="e.g. Grilled chicken salad">
-      </div>
-      <div class="field">
-        <label>Calories</label>
-        <input type="number" id="mealCal" placeholder="0">
-      </div>
-      <div class="macro-grid">
-        <div class="field"><label>Protein (g)</label><input type="number" id="mealProt" placeholder="0"></div>
-        <div class="field"><label>Carbs (g)</label><input type="number" id="mealCarb" placeholder="0"></div>
-        <div class="field"><label>Fat (g)</label><input type="number" id="mealFat" placeholder="0"></div>
-        <div class="field"><label>Fiber (g)</label><input type="number" id="mealFiber" placeholder="0"></div>
-        <div class="field"><label>Sugar (g)</label><input type="number" id="mealSugar" placeholder="0"></div>
-      </div>
-      <button class="add-meal-btn" onclick="addMeal()">+ Add Meal</button>
     </div>
   </div>
 
@@ -886,6 +952,277 @@ const SCHEDULE = {
 function getTodaySchedule() {
   const dow = new Date().getDay();
   return SCHEDULE[dow];
+}
+
+// ===== FOOD DATABASE =====
+// Estimated averages for common foods (cal, protein, carbs, fat, fiber, sugar)
+const FOODS = [
+  // === BURGERS & SANDWICHES ===
+  { name: 'Burger with Fries', emoji: '🍔', cat: 'Lunch', cal: 850, p: 35, c: 75, f: 45, fi: 4, s: 10 },
+  { name: 'Cheeseburger', emoji: '🍔', cat: 'Lunch', cal: 550, p: 28, c: 40, f: 30, fi: 2, s: 8 },
+  { name: 'Double Cheeseburger', emoji: '🍔', cat: 'Lunch', cal: 750, p: 42, c: 42, f: 42, fi: 2, s: 9 },
+  { name: 'Bacon Burger', emoji: '🥓', cat: 'Lunch', cal: 680, p: 35, c: 40, f: 40, fi: 2, s: 8 },
+  { name: 'Chicken Sandwich', emoji: '🐔', cat: 'Lunch', cal: 480, p: 28, c: 45, f: 20, fi: 2, s: 5 },
+  { name: 'Crispy Chicken Sandwich', emoji: '🐔', cat: 'Lunch', cal: 600, p: 25, c: 50, f: 30, fi: 2, s: 6 },
+  { name: 'Turkey Sandwich', emoji: '🥪', cat: 'Lunch', cal: 380, p: 26, c: 36, f: 12, fi: 3, s: 4 },
+  { name: 'Ham & Cheese Sandwich', emoji: '🥪', cat: 'Lunch', cal: 420, p: 22, c: 38, f: 18, fi: 2, s: 4 },
+  { name: 'BLT Sandwich', emoji: '🥪', cat: 'Lunch', cal: 400, p: 16, c: 32, f: 22, fi: 2, s: 4 },
+  { name: 'Club Sandwich', emoji: '🥪', cat: 'Lunch', cal: 550, p: 30, c: 42, f: 28, fi: 3, s: 5 },
+  { name: 'Grilled Cheese', emoji: '🧀', cat: 'Lunch', cal: 440, p: 16, c: 36, f: 26, fi: 1, s: 4 },
+  { name: 'Philly Cheesesteak', emoji: '🥩', cat: 'Lunch', cal: 620, p: 32, c: 45, f: 32, fi: 2, s: 5 },
+  { name: 'Pulled Pork Sandwich', emoji: '🐷', cat: 'Lunch', cal: 550, p: 28, c: 48, f: 24, fi: 1, s: 14 },
+  { name: 'Fish Sandwich', emoji: '🐟', cat: 'Lunch', cal: 470, p: 20, c: 45, f: 22, fi: 2, s: 5 },
+  { name: 'Veggie Burger', emoji: '🌿', cat: 'Lunch', cal: 390, p: 18, c: 42, f: 16, fi: 6, s: 6 },
+  { name: 'Hot Dog', emoji: '🌭', cat: 'Lunch', cal: 350, p: 12, c: 30, f: 20, fi: 1, s: 5 },
+  { name: 'Corn Dog', emoji: '🌭', cat: 'Snack', cal: 330, p: 10, c: 35, f: 16, fi: 1, s: 7 },
+  { name: 'Sub / Hoagie (6 inch)', emoji: '🥖', cat: 'Lunch', cal: 500, p: 24, c: 50, f: 22, fi: 3, s: 6 },
+  { name: 'Wrap / Burrito', emoji: '🌯', cat: 'Lunch', cal: 550, p: 24, c: 55, f: 24, fi: 5, s: 4 },
+
+  // === PIZZA ===
+  { name: 'Pizza Slice (Cheese)', emoji: '🍕', cat: 'Lunch', cal: 285, p: 12, c: 36, f: 10, fi: 2, s: 4 },
+  { name: 'Pizza Slice (Pepperoni)', emoji: '🍕', cat: 'Lunch', cal: 310, p: 14, c: 34, f: 14, fi: 2, s: 4 },
+  { name: 'Pizza (2 Slices)', emoji: '🍕', cat: 'Lunch', cal: 600, p: 26, c: 70, f: 24, fi: 4, s: 8 },
+  { name: 'Pizza (3 Slices)', emoji: '🍕', cat: 'Dinner', cal: 900, p: 38, c: 105, f: 36, fi: 6, s: 12 },
+
+  // === CHICKEN ===
+  { name: 'Chicken Tenders (5 pc)', emoji: '🍗', cat: 'Lunch', cal: 480, p: 30, c: 28, f: 26, fi: 1, s: 1 },
+  { name: 'Chicken Nuggets (10 pc)', emoji: '🍗', cat: 'Lunch', cal: 470, p: 24, c: 30, f: 28, fi: 1, s: 1 },
+  { name: 'Chicken Wings (6 pc)', emoji: '🍗', cat: 'Dinner', cal: 540, p: 42, c: 6, f: 38, fi: 0, s: 1 },
+  { name: 'Fried Chicken (2 pc)', emoji: '🍗', cat: 'Dinner', cal: 560, p: 38, c: 18, f: 36, fi: 1, s: 0 },
+  { name: 'Grilled Chicken Breast', emoji: '🍗', cat: 'Dinner', cal: 280, p: 42, c: 0, f: 12, fi: 0, s: 0 },
+  { name: 'Chicken Quesadilla', emoji: '🫔', cat: 'Lunch', cal: 520, p: 28, c: 38, f: 28, fi: 2, s: 2 },
+
+  // === MEXICAN ===
+  { name: 'Tacos (3)', emoji: '🌮', cat: 'Lunch', cal: 540, p: 24, c: 42, f: 28, fi: 6, s: 3 },
+  { name: 'Burrito Bowl', emoji: '🥗', cat: 'Lunch', cal: 650, p: 32, c: 72, f: 24, fi: 12, s: 4 },
+  { name: 'Burrito', emoji: '🌯', cat: 'Lunch', cal: 700, p: 30, c: 80, f: 28, fi: 8, s: 4 },
+  { name: 'Nachos with Cheese', emoji: '🧀', cat: 'Snack', cal: 560, p: 14, c: 52, f: 34, fi: 4, s: 3 },
+  { name: 'Chips & Salsa', emoji: '🫕', cat: 'Snack', cal: 280, p: 4, c: 38, f: 12, fi: 3, s: 4 },
+  { name: 'Chips & Guacamole', emoji: '🥑', cat: 'Snack', cal: 400, p: 5, c: 40, f: 24, fi: 6, s: 2 },
+
+  // === ASIAN ===
+  { name: 'Fried Rice', emoji: '🍚', cat: 'Lunch', cal: 450, p: 12, c: 60, f: 16, fi: 2, s: 3 },
+  { name: 'Lo Mein', emoji: '🍜', cat: 'Dinner', cal: 520, p: 18, c: 62, f: 22, fi: 3, s: 8 },
+  { name: 'Orange Chicken with Rice', emoji: '🍊', cat: 'Dinner', cal: 680, p: 28, c: 82, f: 24, fi: 2, s: 18 },
+  { name: 'Teriyaki Chicken Bowl', emoji: '🍚', cat: 'Dinner', cal: 580, p: 32, c: 72, f: 14, fi: 2, s: 16 },
+  { name: 'Sushi Roll (8 pc)', emoji: '🍣', cat: 'Lunch', cal: 350, p: 14, c: 50, f: 8, fi: 2, s: 6 },
+  { name: 'Ramen Bowl', emoji: '🍜', cat: 'Dinner', cal: 550, p: 22, c: 58, f: 24, fi: 2, s: 4 },
+  { name: 'Egg Roll (2)', emoji: '🥟', cat: 'Snack', cal: 280, p: 8, c: 28, f: 14, fi: 2, s: 3 },
+  { name: 'General Tso Chicken', emoji: '🍗', cat: 'Dinner', cal: 700, p: 30, c: 68, f: 32, fi: 2, s: 20 },
+
+  // === ITALIAN / PASTA ===
+  { name: 'Spaghetti & Meatballs', emoji: '🍝', cat: 'Dinner', cal: 650, p: 30, c: 72, f: 24, fi: 5, s: 10 },
+  { name: 'Mac & Cheese', emoji: '🧀', cat: 'Lunch', cal: 520, p: 18, c: 52, f: 26, fi: 2, s: 6 },
+  { name: 'Alfredo Pasta', emoji: '🍝', cat: 'Dinner', cal: 680, p: 22, c: 68, f: 34, fi: 3, s: 4 },
+  { name: 'Lasagna', emoji: '🍝', cat: 'Dinner', cal: 580, p: 28, c: 42, f: 30, fi: 3, s: 8 },
+  { name: 'Garlic Bread (2 pc)', emoji: '🍞', cat: 'Snack', cal: 280, p: 6, c: 32, f: 14, fi: 1, s: 2 },
+
+  // === FAST FOOD COMBOS ===
+  { name: 'Big Mac Meal', emoji: '🍔', cat: 'Lunch', cal: 1080, p: 32, c: 112, f: 52, fi: 5, s: 18 },
+  { name: 'Chicken Nugget Meal', emoji: '🍗', cat: 'Lunch', cal: 820, p: 28, c: 88, f: 38, fi: 4, s: 12 },
+  { name: 'Whopper Meal', emoji: '🍔', cat: 'Lunch', cal: 1070, p: 34, c: 108, f: 54, fi: 5, s: 20 },
+
+  // === FRIES & SIDES ===
+  { name: 'French Fries (Medium)', emoji: '🍟', cat: 'Snack', cal: 380, p: 5, c: 48, f: 18, fi: 4, s: 0 },
+  { name: 'French Fries (Large)', emoji: '🍟', cat: 'Snack', cal: 510, p: 7, c: 64, f: 24, fi: 5, s: 0 },
+  { name: 'Onion Rings', emoji: '🧅', cat: 'Snack', cal: 410, p: 6, c: 46, f: 22, fi: 2, s: 4 },
+  { name: 'Mozzarella Sticks (5)', emoji: '🧀', cat: 'Snack', cal: 440, p: 18, c: 32, f: 26, fi: 1, s: 2 },
+  { name: 'Tater Tots', emoji: '🥔', cat: 'Snack', cal: 360, p: 4, c: 42, f: 20, fi: 3, s: 1 },
+  { name: 'Side Salad', emoji: '🥗', cat: 'Snack', cal: 120, p: 4, c: 12, f: 6, fi: 3, s: 4 },
+  { name: 'Coleslaw', emoji: '🥗', cat: 'Snack', cal: 180, p: 1, c: 16, f: 12, fi: 2, s: 12 },
+  { name: 'Baked Potato', emoji: '🥔', cat: 'Snack', cal: 280, p: 6, c: 58, f: 0, fi: 4, s: 3 },
+  { name: 'Loaded Baked Potato', emoji: '🥔', cat: 'Lunch', cal: 480, p: 14, c: 60, f: 20, fi: 4, s: 4 },
+
+  // === SALADS ===
+  { name: 'Caesar Salad', emoji: '🥗', cat: 'Lunch', cal: 380, p: 14, c: 18, f: 28, fi: 3, s: 3 },
+  { name: 'Chicken Caesar Salad', emoji: '🥗', cat: 'Lunch', cal: 480, p: 32, c: 18, f: 30, fi: 3, s: 3 },
+  { name: 'Cobb Salad', emoji: '🥗', cat: 'Lunch', cal: 520, p: 30, c: 14, f: 38, fi: 4, s: 4 },
+  { name: 'Garden Salad', emoji: '🥗', cat: 'Lunch', cal: 180, p: 6, c: 16, f: 10, fi: 4, s: 6 },
+
+  // === SOUP ===
+  { name: 'Chicken Noodle Soup', emoji: '🍲', cat: 'Lunch', cal: 220, p: 14, c: 24, f: 6, fi: 2, s: 3 },
+  { name: 'Tomato Soup', emoji: '🍲', cat: 'Lunch', cal: 180, p: 4, c: 26, f: 6, fi: 3, s: 14 },
+  { name: 'Chili', emoji: '🍲', cat: 'Lunch', cal: 380, p: 22, c: 32, f: 16, fi: 8, s: 6 },
+  { name: 'Clam Chowder', emoji: '🍲', cat: 'Lunch', cal: 300, p: 10, c: 28, f: 16, fi: 2, s: 3 },
+  { name: 'Soup & Sandwich Combo', emoji: '🍲', cat: 'Lunch', cal: 580, p: 24, c: 58, f: 24, fi: 5, s: 8 },
+
+  // === BREAKFAST ===
+  { name: 'Scrambled Eggs (2)', emoji: '🥚', cat: 'Breakfast', cal: 180, p: 12, c: 2, f: 14, fi: 0, s: 1 },
+  { name: 'Eggs & Toast', emoji: '🍳', cat: 'Breakfast', cal: 320, p: 16, c: 30, f: 14, fi: 2, s: 3 },
+  { name: 'Eggs, Bacon & Toast', emoji: '🥓', cat: 'Breakfast', cal: 450, p: 24, c: 30, f: 26, fi: 2, s: 3 },
+  { name: 'Pancakes (3)', emoji: '🥞', cat: 'Breakfast', cal: 520, p: 12, c: 76, f: 18, fi: 2, s: 24 },
+  { name: 'Waffles (2)', emoji: '🧇', cat: 'Breakfast', cal: 480, p: 10, c: 64, f: 20, fi: 2, s: 16 },
+  { name: 'French Toast (2 slices)', emoji: '🍞', cat: 'Breakfast', cal: 440, p: 14, c: 52, f: 18, fi: 2, s: 16 },
+  { name: 'Breakfast Burrito', emoji: '🌯', cat: 'Breakfast', cal: 520, p: 22, c: 42, f: 28, fi: 3, s: 3 },
+  { name: 'Breakfast Sandwich', emoji: '🥪', cat: 'Breakfast', cal: 420, p: 20, c: 34, f: 22, fi: 1, s: 3 },
+  { name: 'Oatmeal', emoji: '🥣', cat: 'Breakfast', cal: 220, p: 8, c: 38, f: 4, fi: 5, s: 8 },
+  { name: 'Cereal with Milk', emoji: '🥣', cat: 'Breakfast', cal: 280, p: 8, c: 48, f: 6, fi: 3, s: 18 },
+  { name: 'Yogurt & Granola', emoji: '🥣', cat: 'Breakfast', cal: 340, p: 14, c: 48, f: 10, fi: 3, s: 22 },
+  { name: 'Bagel with Cream Cheese', emoji: '🥯', cat: 'Breakfast', cal: 380, p: 10, c: 52, f: 14, fi: 2, s: 6 },
+  { name: 'Toast with Butter', emoji: '🍞', cat: 'Breakfast', cal: 200, p: 4, c: 26, f: 8, fi: 1, s: 2 },
+  { name: 'Toast with PB&J', emoji: '🍞', cat: 'Breakfast', cal: 380, p: 12, c: 48, f: 16, fi: 3, s: 18 },
+  { name: 'Banana', emoji: '🍌', cat: 'Snack', cal: 105, p: 1, c: 27, f: 0, fi: 3, s: 14 },
+  { name: 'Apple', emoji: '🍎', cat: 'Snack', cal: 95, p: 0, c: 25, f: 0, fi: 4, s: 19 },
+
+  // === DRINKS ===
+  { name: 'Soda (Can)', emoji: '🥤', cat: 'Snack', cal: 140, p: 0, c: 39, f: 0, fi: 0, s: 39 },
+  { name: 'Soda (Large Fountain)', emoji: '🥤', cat: 'Snack', cal: 310, p: 0, c: 84, f: 0, fi: 0, s: 84 },
+  { name: 'Diet Soda', emoji: '🥤', cat: 'Snack', cal: 0, p: 0, c: 0, f: 0, fi: 0, s: 0 },
+  { name: 'Lemonade', emoji: '🍋', cat: 'Snack', cal: 180, p: 0, c: 46, f: 0, fi: 0, s: 44 },
+  { name: 'Iced Tea (Sweet)', emoji: '🧋', cat: 'Snack', cal: 140, p: 0, c: 36, f: 0, fi: 0, s: 34 },
+  { name: 'Iced Tea (Unsweet)', emoji: '🧋', cat: 'Snack', cal: 5, p: 0, c: 1, f: 0, fi: 0, s: 0 },
+  { name: 'Coffee (Black)', emoji: '☕', cat: 'Breakfast', cal: 5, p: 0, c: 0, f: 0, fi: 0, s: 0 },
+  { name: 'Coffee with Cream & Sugar', emoji: '☕', cat: 'Breakfast', cal: 80, p: 1, c: 10, f: 4, fi: 0, s: 10 },
+  { name: 'Latte', emoji: '☕', cat: 'Breakfast', cal: 190, p: 10, c: 18, f: 7, fi: 0, s: 16 },
+  { name: 'Iced Coffee', emoji: '☕', cat: 'Snack', cal: 120, p: 2, c: 20, f: 4, fi: 0, s: 18 },
+  { name: 'Frappuccino / Frappe', emoji: '☕', cat: 'Snack', cal: 380, p: 5, c: 58, f: 14, fi: 0, s: 50 },
+  { name: 'Smoothie', emoji: '🥤', cat: 'Snack', cal: 320, p: 6, c: 64, f: 4, fi: 4, s: 52 },
+  { name: 'Protein Shake', emoji: '🥤', cat: 'Snack', cal: 250, p: 30, c: 20, f: 5, fi: 2, s: 8 },
+  { name: 'Orange Juice', emoji: '🍊', cat: 'Breakfast', cal: 110, p: 2, c: 26, f: 0, fi: 0, s: 22 },
+  { name: 'Milk (Glass)', emoji: '🥛', cat: 'Breakfast', cal: 150, p: 8, c: 12, f: 8, fi: 0, s: 12 },
+  { name: 'Chocolate Milk', emoji: '🥛', cat: 'Snack', cal: 210, p: 8, c: 30, f: 8, fi: 1, s: 26 },
+  { name: 'Energy Drink', emoji: '⚡', cat: 'Snack', cal: 160, p: 0, c: 42, f: 0, fi: 0, s: 40 },
+  { name: 'Energy Drink (Sugar Free)', emoji: '⚡', cat: 'Snack', cal: 10, p: 0, c: 2, f: 0, fi: 0, s: 0 },
+  { name: 'Sports Drink (Gatorade)', emoji: '🥤', cat: 'Snack', cal: 140, p: 0, c: 36, f: 0, fi: 0, s: 34 },
+  { name: 'Water Bottle', emoji: '💧', cat: 'Snack', cal: 0, p: 0, c: 0, f: 0, fi: 0, s: 0 },
+
+  // === SNACKS ===
+  { name: 'Chips (Bag)', emoji: '🥔', cat: 'Snack', cal: 270, p: 3, c: 28, f: 16, fi: 2, s: 1 },
+  { name: 'Doritos (Bag)', emoji: '🥔', cat: 'Snack', cal: 280, p: 4, c: 34, f: 14, fi: 2, s: 2 },
+  { name: 'Granola Bar', emoji: '🍫', cat: 'Snack', cal: 190, p: 4, c: 28, f: 8, fi: 2, s: 12 },
+  { name: 'Protein Bar', emoji: '🍫', cat: 'Snack', cal: 250, p: 20, c: 28, f: 8, fi: 4, s: 8 },
+  { name: 'Trail Mix (Handful)', emoji: '🥜', cat: 'Snack', cal: 280, p: 8, c: 24, f: 18, fi: 3, s: 10 },
+  { name: 'Peanut Butter (2 tbsp)', emoji: '🥜', cat: 'Snack', cal: 190, p: 7, c: 7, f: 16, fi: 2, s: 3 },
+  { name: 'String Cheese', emoji: '🧀', cat: 'Snack', cal: 80, p: 7, c: 1, f: 5, fi: 0, s: 0 },
+  { name: 'Crackers & Cheese', emoji: '🧀', cat: 'Snack', cal: 240, p: 8, c: 22, f: 14, fi: 1, s: 2 },
+  { name: 'Pretzels', emoji: '🥨', cat: 'Snack', cal: 220, p: 5, c: 46, f: 2, fi: 1, s: 1 },
+  { name: 'Popcorn (Movie size)', emoji: '🍿', cat: 'Snack', cal: 480, p: 6, c: 52, f: 28, fi: 8, s: 1 },
+  { name: 'Fruit Cup', emoji: '🍇', cat: 'Snack', cal: 110, p: 1, c: 28, f: 0, fi: 2, s: 24 },
+
+  // === DESSERTS ===
+  { name: 'Cookie (Large)', emoji: '🍪', cat: 'Snack', cal: 280, p: 3, c: 38, f: 14, fi: 1, s: 22 },
+  { name: 'Brownie', emoji: '🍫', cat: 'Snack', cal: 320, p: 4, c: 42, f: 16, fi: 2, s: 28 },
+  { name: 'Ice Cream (Scoop)', emoji: '🍦', cat: 'Snack', cal: 270, p: 4, c: 32, f: 14, fi: 1, s: 28 },
+  { name: 'Ice Cream Sundae', emoji: '🍨', cat: 'Snack', cal: 450, p: 6, c: 58, f: 22, fi: 1, s: 46 },
+  { name: 'Milkshake', emoji: '🥤', cat: 'Snack', cal: 580, p: 12, c: 82, f: 22, fi: 1, s: 72 },
+  { name: 'Donut', emoji: '🍩', cat: 'Breakfast', cal: 300, p: 4, c: 36, f: 16, fi: 1, s: 18 },
+  { name: 'Muffin', emoji: '🧁', cat: 'Breakfast', cal: 380, p: 6, c: 52, f: 16, fi: 2, s: 28 },
+  { name: 'Cake Slice', emoji: '🍰', cat: 'Snack', cal: 400, p: 4, c: 52, f: 20, fi: 1, s: 36 },
+  { name: 'Candy Bar', emoji: '🍫', cat: 'Snack', cal: 260, p: 4, c: 34, f: 12, fi: 1, s: 28 },
+
+  // === HEALTHIER OPTIONS ===
+  { name: 'Grilled Chicken Salad', emoji: '🥗', cat: 'Lunch', cal: 350, p: 34, c: 12, f: 18, fi: 4, s: 4 },
+  { name: 'Salmon with Rice', emoji: '🐟', cat: 'Dinner', cal: 520, p: 36, c: 48, f: 18, fi: 2, s: 2 },
+  { name: 'Steak with Potato', emoji: '🥩', cat: 'Dinner', cal: 620, p: 42, c: 40, f: 28, fi: 4, s: 2 },
+  { name: 'Grilled Chicken with Veggies', emoji: '🍗', cat: 'Dinner', cal: 380, p: 38, c: 16, f: 16, fi: 6, s: 6 },
+  { name: 'Rice & Beans', emoji: '🍚', cat: 'Lunch', cal: 380, p: 14, c: 62, f: 6, fi: 10, s: 2 },
+  { name: 'Hummus & Pita', emoji: '🫓', cat: 'Snack', cal: 320, p: 10, c: 40, f: 14, fi: 5, s: 3 },
+  { name: 'Greek Yogurt', emoji: '🥣', cat: 'Snack', cal: 130, p: 14, c: 8, f: 4, fi: 0, s: 6 },
+  { name: 'Avocado Toast', emoji: '🥑', cat: 'Breakfast', cal: 280, p: 6, c: 26, f: 18, fi: 7, s: 2 },
+  { name: 'Overnight Oats', emoji: '🥣', cat: 'Breakfast', cal: 340, p: 12, c: 52, f: 10, fi: 6, s: 14 },
+  { name: 'Protein Bowl', emoji: '🥗', cat: 'Lunch', cal: 480, p: 36, c: 42, f: 16, fi: 6, s: 4 },
+  { name: 'Turkey & Veggie Wrap', emoji: '🌯', cat: 'Lunch', cal: 380, p: 26, c: 36, f: 14, fi: 4, s: 4 },
+  { name: 'Tuna Salad', emoji: '🐟', cat: 'Lunch', cal: 320, p: 28, c: 8, f: 20, fi: 2, s: 2 },
+  { name: 'Hard Boiled Eggs (2)', emoji: '🥚', cat: 'Snack', cal: 140, p: 12, c: 1, f: 10, fi: 0, s: 1 },
+];
+
+// Quick picks shown by default on the log page
+const QUICK_PICKS = [
+  'Burger with Fries', 'Pizza (2 Slices)', 'Chicken Tenders (5 pc)', 'Chicken Sandwich',
+  'Coffee with Cream & Sugar', 'Soda (Can)', 'French Fries (Medium)', 'Chips (Bag)',
+];
+
+function searchFood() {
+  const q = document.getElementById('foodSearch').value.trim().toLowerCase();
+  const results = document.getElementById('searchResults');
+  const quickPicks = document.getElementById('quickPicks');
+
+  if (!q) {
+    results.style.display = 'none';
+    quickPicks.style.display = 'block';
+    return;
+  }
+
+  quickPicks.style.display = 'none';
+  const matches = FOODS.filter(f =>
+    f.name.toLowerCase().includes(q) ||
+    f.emoji.includes(q)
+  ).slice(0, 12);
+
+  if (matches.length === 0) {
+    results.style.display = 'block';
+    results.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3)">No matches. Try another search or use Custom Entry below.</div>';
+    return;
+  }
+
+  results.style.display = 'block';
+  results.innerHTML = matches.map(f => `
+    <div class="search-result" onclick="quickAddFood('${f.name.replace(/'/g, "\\'")}')">
+      <span class="emoji">${f.emoji}</span>
+      <div class="info">
+        <div class="name">${f.name}</div>
+        <div class="detail">P:${f.p}g C:${f.c}g F:${f.f}g Fiber:${f.fi}g</div>
+      </div>
+      <span class="cal-badge">${f.cal} cal</span>
+    </div>
+  `).join('');
+}
+
+function quickAddFood(name) {
+  const food = FOODS.find(f => f.name === name);
+  if (!food) return;
+
+  const meal = {
+    id: Date.now(),
+    category: food.cat,
+    name: food.name,
+    calories: food.cal,
+    protein: food.p,
+    carbs: food.c,
+    fat: food.f,
+    fiber: food.fi,
+    sugar: food.s,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  const meals = getMeals();
+  meals.push(meal);
+  saveMeals(meals);
+
+  // Clear search
+  document.getElementById('foodSearch').value = '';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('quickPicks').style.display = 'block';
+
+  showNotif(food.emoji + ' ' + food.name + ' logged!');
+  renderMeals();
+}
+
+function renderQuickPicks() {
+  const grid = document.getElementById('quickPickGrid');
+  grid.innerHTML = QUICK_PICKS.map(name => {
+    const f = FOODS.find(fd => fd.name === name);
+    if (!f) return '';
+    return `<button class="quick-pick-btn" onclick="quickAddFood('${f.name.replace(/'/g, "\\'")}')">
+      <span class="emoji">${f.emoji}</span>
+      <div class="info">
+        <div class="name">${f.name}</div>
+        <div class="cals">${f.cal} cal</div>
+      </div>
+    </button>`;
+  }).join('');
+}
+
+function toggleManualEntry() {
+  const form = document.getElementById('manualForm');
+  const toggle = document.getElementById('manualToggle');
+  if (form.style.display === 'none') {
+    form.style.display = 'block';
+    toggle.textContent = '−';
+  } else {
+    form.style.display = 'none';
+    toggle.textContent = '+';
+  }
 }
 
 // ===== FASTING PLANS =====
@@ -1600,6 +1937,7 @@ function startTimerLoop() {
 function init() {
   renderHome();
   renderFasting();
+  renderQuickPicks();
   renderMeals();
   renderWater();
   renderSettings();
