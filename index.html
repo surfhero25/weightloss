@@ -739,6 +739,14 @@ body {
         <button class="add-meal-btn" style="margin-top:10px" onclick="saveWeighIn()">Save Weigh-In</button>
       </div>
     </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--blue)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        Import Renpho CSV
+        <input type="file" accept=".csv" onchange="importRenphoCSV(event)" style="display:none">
+      </label>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Renpho app > Settings > My Data > Export</div>
+    </div>
   </div>
 
   <!-- Weight History Chart -->
@@ -1863,6 +1871,135 @@ function saveWeighIn() {
   showNotif('Weigh-in saved! Weight: ' + weight + ' lb');
   playAlarm();
   renderBodyStats();
+}
+
+function importRenphoCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) { showNotif('CSV file is empty'); return; }
+
+    // Parse headers - normalize to lowercase, trim quotes/spaces
+    const headers = lines[0].split(',').map(h => h.trim().replace(/['"]/g, '').toLowerCase());
+
+    // Column mapping - flexible matching for various Renpho export formats
+    const colMap = {};
+    headers.forEach((h, i) => {
+      if (h.includes('date') || h.includes('time')) colMap.date = i;
+      else if (h === 'weight' || h.includes('weight') && !h.includes('free')) colMap.weight = i;
+      else if (h.includes('bmi') && !h.includes('bmr')) colMap.bmi = i;
+      else if (h.includes('body fat') || h === 'bodyfat' || h === 'fat%' || h === 'fat') colMap.bodyFat = i;
+      else if (h.includes('muscle mass') || h === 'muscle') colMap.muscleMass = i;
+      else if (h.includes('visceral')) colMap.visceralFat = i;
+      else if (h.includes('bmr') || h.includes('metabolic rate')) colMap.bmr = i;
+      else if (h.includes('skeletal') || h.includes('smm')) colMap.skeletalMuscle = i;
+      else if (h.includes('bone')) colMap.boneMass = i;
+      else if (h.includes('water') || h.includes('tbw')) colMap.bodyWater = i;
+      else if (h.includes('subcutaneous')) colMap.subFat = i;
+      else if (h.includes('protein')) colMap.protein = i;
+      else if (h.includes('metabolic age') || h.includes('body age')) colMap.metAge = i;
+      else if (h.includes('fat-free') || h.includes('fat free') || h.includes('lean')) colMap.fatFree = i;
+    });
+
+    if (colMap.date === undefined || colMap.weight === undefined) {
+      showNotif('Could not find Date and Weight columns in CSV');
+      return;
+    }
+
+    const weighIns = getWeighIns();
+    const existingDates = new Set(weighIns.map(w => w.date));
+    let imported = 0;
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      if (cols.length < 2) continue;
+
+      // Parse date - handle various formats
+      const rawDate = cols[colMap.date]?.trim().replace(/['"]/g, '');
+      const date = parseFlexibleDate(rawDate);
+      if (!date) continue;
+
+      const weight = parseFloat(cols[colMap.weight]);
+      if (!weight || weight < 50 || weight > 500) continue;
+
+      // Skip if we already have this date
+      if (existingDates.has(date)) continue;
+
+      const entry = {
+        date: date,
+        timestamp: new Date(date).getTime(),
+        weight: weight,
+        bodyFat: colMap.bodyFat !== undefined ? parseFloat(cols[colMap.bodyFat]) || null : null,
+        muscleMass: colMap.muscleMass !== undefined ? parseFloat(cols[colMap.muscleMass]) || null : null,
+        visceralFat: colMap.visceralFat !== undefined ? parseInt(cols[colMap.visceralFat]) || null : null,
+        bmr: colMap.bmr !== undefined ? parseInt(cols[colMap.bmr]) || null : null,
+        skeletalMuscle: colMap.skeletalMuscle !== undefined ? parseFloat(cols[colMap.skeletalMuscle]) || null : null,
+      };
+
+      weighIns.push(entry);
+      existingDates.add(date);
+      imported++;
+    }
+
+    // Sort by date descending
+    weighIns.sort((a, b) => b.timestamp - a.timestamp);
+    saveWeighIns(weighIns);
+
+    showNotif('Imported ' + imported + ' weigh-ins from Renpho!');
+    playAlarm();
+    renderBodyStats();
+
+    // Reset file input so same file can be re-imported
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// Parse CSV line handling quoted fields with commas
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuotes = !inQuotes; }
+    else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+    else { current += ch; }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+// Parse dates in various formats: MM/DD/YYYY, YYYY-MM-DD, MM-DD-YYYY, etc.
+function parseFlexibleDate(str) {
+  if (!str) return null;
+  str = str.replace(/['"]/g, '').trim();
+
+  // Try YYYY-MM-DD
+  if (/^\d{4}-\d{1,2}-\d{1,2}/.test(str)) {
+    const parts = str.split(/[-T ]/);
+    return parts[0] + '-' + parts[1].padStart(2,'0') + '-' + parts[2].padStart(2,'0');
+  }
+  // Try MM/DD/YYYY or M/D/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
+    const parts = str.split(/[/ ]/);
+    return parts[2] + '-' + parts[0].padStart(2,'0') + '-' + parts[1].padStart(2,'0');
+  }
+  // Try MM-DD-YYYY
+  if (/^\d{1,2}-\d{1,2}-\d{4}/.test(str)) {
+    const parts = str.split('-');
+    return parts[2] + '-' + parts[0].padStart(2,'0') + '-' + parts[1].padStart(2,'0');
+  }
+  // Try Date() parse as fallback
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    return d.toISOString().split('T')[0];
+  }
+  return null;
 }
 
 function renderBodyStats() {
