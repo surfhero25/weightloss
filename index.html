@@ -555,6 +555,51 @@ body {
 .daily-total-item .val { font-size: 16px; font-weight: 700; }
 .daily-total-item .lbl { font-size: 10px; color: var(--text2); }
 
+/* Body Stats */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.stat-box {
+  background: var(--card2);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.stat-box .val { font-size: 20px; font-weight: 700; }
+.stat-box .val.good { color: var(--green); }
+.stat-box .val.warn { color: var(--orange); }
+.stat-box .val.bad { color: var(--red); }
+.stat-box .lbl { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.stat-box .delta { font-size: 10px; font-weight: 600; margin-top: 2px; }
+.stat-box .delta.pos { color: var(--red); }
+.stat-box .delta.neg { color: var(--green); }
+.stat-box .delta.neutral { color: var(--text3); }
+.weight-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.weight-entry:last-child { border-bottom: none; }
+.weight-entry .date { color: var(--text2); }
+.weight-entry .val { font-weight: 600; }
+.calorie-bar {
+  height: 6px;
+  background: var(--card2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.calorie-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
 /* Quick Pick / Food Search */
 .quick-pick-grid {
   display: grid;
@@ -666,6 +711,40 @@ body {
       <div class="water-count" id="homeWaterCount">0 / 8</div>
     </div>
     <div class="water-glasses" id="homeWaterGlasses"></div>
+  </div>
+
+  <!-- Body Stats -->
+  <div class="card card-sm">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="section-title" style="margin:0">Body Stats</div>
+      <span style="font-size:12px;color:var(--text3)" id="statsDate">No data yet</span>
+    </div>
+    <div id="bodyStatsDisplay">
+      <div style="color:var(--text3);font-size:14px;text-align:center;padding:12px">Log your first weigh-in below</div>
+    </div>
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleWeighIn()">
+        <span style="font-size:13px;font-weight:600;color:var(--accent2)">+ Log Weigh-In</span>
+        <span id="weighInToggle" style="color:var(--text2);font-size:16px">+</span>
+      </div>
+      <div id="weighInForm" style="display:none;margin-top:12px">
+        <div class="macro-grid" style="gap:8px">
+          <div class="field"><label style="font-size:11px;color:var(--text2);font-weight:600">Weight (lb)</label><input type="number" id="statWeight" class="setting-input" step="0.1" placeholder="172.8"></div>
+          <div class="field"><label style="font-size:11px;color:var(--text2);font-weight:600">Body Fat %</label><input type="number" id="statBF" class="setting-input" step="0.1" placeholder="27.5"></div>
+          <div class="field"><label style="font-size:11px;color:var(--text2);font-weight:600">Muscle Mass (lb)</label><input type="number" id="statMuscle" class="setting-input" step="0.1" placeholder="119.0"></div>
+          <div class="field"><label style="font-size:11px;color:var(--text2);font-weight:600">Visceral Fat</label><input type="number" id="statVF" class="setting-input" placeholder="13"></div>
+          <div class="field"><label style="font-size:11px;color:var(--text2);font-weight:600">BMR (kcal)</label><input type="number" id="statBMR" class="setting-input" placeholder="1597"></div>
+          <div class="field"><label style="font-size:11px;color:var(--text2);font-weight:600">Skeletal Muscle %</label><input type="number" id="statSM" class="setting-input" step="0.1" placeholder="46.9"></div>
+        </div>
+        <button class="add-meal-btn" style="margin-top:10px" onclick="saveWeighIn()">Save Weigh-In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weight History Chart -->
+  <div class="card card-sm" id="weightHistoryCard" style="display:none">
+    <div class="section-title">Progress</div>
+    <div id="weightHistory"></div>
   </div>
 </div>
 
@@ -909,7 +988,7 @@ function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 function getSettings() {
   return getData('settings', {
     name: 'David',
-    calorieGoal: 2000,
+    calorieGoal: 1600,
     waterTarget: 8,
     eatStart: '12:00',
     eatEnd: '20:00',
@@ -1264,7 +1343,9 @@ function renderHome() {
   renderScheduleCard();
   updateFastMini();
   updateHomeNutrition();
+  updateHomeNutritionWithGoal();
   renderHomeWater();
+  renderBodyStats();
 }
 
 function renderWeekStrip() {
@@ -1718,6 +1799,202 @@ function calcNutritionScore(meals) {
   `;
 }
 
+// ===== BODY STATS =====
+function getWeighIns() { return getData('weighIns', []); }
+function saveWeighIns(w) { setData('weighIns', w); }
+
+function toggleWeighIn() {
+  const form = document.getElementById('weighInForm');
+  const toggle = document.getElementById('weighInToggle');
+  if (form.style.display === 'none') {
+    form.style.display = 'block';
+    toggle.textContent = '−';
+  } else {
+    form.style.display = 'none';
+    toggle.textContent = '+';
+  }
+}
+
+function saveWeighIn() {
+  const weight = parseFloat(document.getElementById('statWeight').value);
+  if (!weight) { showNotif('Enter at least your weight'); return; }
+
+  const entry = {
+    date: today(),
+    timestamp: Date.now(),
+    weight: weight,
+    bodyFat: parseFloat(document.getElementById('statBF').value) || null,
+    muscleMass: parseFloat(document.getElementById('statMuscle').value) || null,
+    visceralFat: parseInt(document.getElementById('statVF').value) || null,
+    bmr: parseInt(document.getElementById('statBMR').value) || null,
+    skeletalMuscle: parseFloat(document.getElementById('statSM').value) || null,
+  };
+
+  const weighIns = getWeighIns();
+  // Replace if same date, otherwise add
+  const existIdx = weighIns.findIndex(w => w.date === today());
+  if (existIdx >= 0) weighIns[existIdx] = entry;
+  else weighIns.push(entry);
+
+  // Sort by date descending
+  weighIns.sort((a, b) => b.timestamp - a.timestamp);
+  saveWeighIns(weighIns);
+
+  // Auto-update calorie goal based on BMR if provided
+  if (entry.bmr) {
+    const s = getSettings();
+    const suggestedCal = Math.round(entry.bmr * 1.2 - 500); // TDEE - 500 deficit
+    if (s.calorieGoal !== suggestedCal) {
+      s.calorieGoal = Math.max(1200, suggestedCal); // never below 1200
+      setData('settings', s);
+    }
+  }
+
+  // Clear form & close
+  document.getElementById('statWeight').value = '';
+  document.getElementById('statBF').value = '';
+  document.getElementById('statMuscle').value = '';
+  document.getElementById('statVF').value = '';
+  document.getElementById('statBMR').value = '';
+  document.getElementById('statSM').value = '';
+  document.getElementById('weighInForm').style.display = 'none';
+  document.getElementById('weighInToggle').textContent = '+';
+
+  showNotif('Weigh-in saved! Weight: ' + weight + ' lb');
+  playAlarm();
+  renderBodyStats();
+}
+
+function renderBodyStats() {
+  const weighIns = getWeighIns();
+  const display = document.getElementById('bodyStatsDisplay');
+  const dateEl = document.getElementById('statsDate');
+  const histCard = document.getElementById('weightHistoryCard');
+
+  if (weighIns.length === 0) {
+    display.innerHTML = '<div style="color:var(--text3);font-size:14px;text-align:center;padding:12px">Log your first weigh-in below</div>';
+    dateEl.textContent = 'No data yet';
+    histCard.style.display = 'none';
+    return;
+  }
+
+  const latest = weighIns[0];
+  const prev = weighIns.length > 1 ? weighIns[1] : null;
+
+  dateEl.textContent = latest.date;
+
+  function delta(curr, prevVal, reverse) {
+    if (!prev || prevVal == null || curr == null) return '<span class="delta neutral">--</span>';
+    const d = Math.round((curr - prevVal) * 10) / 10;
+    if (d === 0) return '<span class="delta neutral">0</span>';
+    // For weight/bodyfat/visceral: negative is good. For muscle: positive is good.
+    const isGood = reverse ? d > 0 : d < 0;
+    const sign = d > 0 ? '+' : '';
+    return `<span class="delta ${isGood ? 'neg' : 'pos'}">${sign}${d}</span>`;
+  }
+
+  function valColor(val, goodBelow, warnBelow) {
+    if (val == null) return '';
+    if (val <= goodBelow) return 'good';
+    if (val <= warnBelow) return 'warn';
+    return 'bad';
+  }
+
+  display.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="val">${latest.weight}</div>
+        <div class="lbl">Weight (lb)</div>
+        ${delta(latest.weight, prev?.weight, false)}
+      </div>
+      <div class="stat-box">
+        <div class="val ${valColor(latest.bodyFat, 20, 25)}">${latest.bodyFat != null ? latest.bodyFat + '%' : '--'}</div>
+        <div class="lbl">Body Fat</div>
+        ${delta(latest.bodyFat, prev?.bodyFat, false)}
+      </div>
+      <div class="stat-box">
+        <div class="val ${latest.muscleMass ? 'good' : ''}">${latest.muscleMass != null ? latest.muscleMass : '--'}</div>
+        <div class="lbl">Muscle (lb)</div>
+        ${delta(latest.muscleMass, prev?.muscleMass, true)}
+      </div>
+      <div class="stat-box">
+        <div class="val ${valColor(latest.visceralFat, 9, 12)}">${latest.visceralFat != null ? latest.visceralFat : '--'}</div>
+        <div class="lbl">Visceral Fat</div>
+        ${delta(latest.visceralFat, prev?.visceralFat, false)}
+      </div>
+      <div class="stat-box">
+        <div class="val">${latest.bmr != null ? latest.bmr : '--'}</div>
+        <div class="lbl">BMR (kcal)</div>
+        ${delta(latest.bmr, prev?.bmr, true)}
+      </div>
+      <div class="stat-box">
+        <div class="val ${latest.skeletalMuscle ? 'good' : ''}">${latest.skeletalMuscle != null ? latest.skeletalMuscle + '%' : '--'}</div>
+        <div class="lbl">Skel. Muscle</div>
+        ${delta(latest.skeletalMuscle, prev?.skeletalMuscle, true)}
+      </div>
+    </div>
+  `;
+
+  // Weight history
+  if (weighIns.length > 1) {
+    histCard.style.display = 'block';
+    const recent = weighIns.slice(0, 10);
+    const startWeight = recent[recent.length - 1].weight;
+    const currentWeight = recent[0].weight;
+    const totalChange = Math.round((currentWeight - startWeight) * 10) / 10;
+    const changeColor = totalChange <= 0 ? 'var(--green)' : 'var(--red)';
+
+    document.getElementById('weightHistory').innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:13px;color:var(--text2)">Last ${recent.length} weigh-ins</span>
+        <span style="font-size:15px;font-weight:700;color:${changeColor}">${totalChange > 0 ? '+' : ''}${totalChange} lb</span>
+      </div>
+      ${recent.map((w, i) => {
+        const prev2 = i < recent.length - 1 ? recent[i + 1] : null;
+        const d = prev2 ? Math.round((w.weight - prev2.weight) * 10) / 10 : 0;
+        const dStr = d === 0 ? '' : (d > 0 ? `<span style="color:var(--red)">+${d}</span>` : `<span style="color:var(--green)">${d}</span>`);
+        return `<div class="weight-entry">
+          <span class="date">${w.date}</span>
+          <span class="val">${w.weight} lb ${dStr}</span>
+        </div>`;
+      }).join('')}
+    `;
+  } else {
+    histCard.style.display = 'none';
+  }
+}
+
+// Also add calorie progress bar to home nutrition card
+function updateHomeNutritionWithGoal() {
+  const s = getSettings();
+  const meals = getMeals();
+  let cal = 0;
+  meals.forEach(m => cal += m.calories || 0);
+  const goal = s.calorieGoal || 1600;
+  const pct = Math.min(100, (cal / goal) * 100);
+  let barColor = 'var(--green)';
+  if (pct > 100) barColor = 'var(--red)';
+  else if (pct > 85) barColor = 'var(--orange)';
+
+  // Insert/update calorie bar after nutrition row if not exists
+  let bar = document.getElementById('homeCalBar');
+  if (!bar) {
+    const container = document.getElementById('homeCal').closest('.card');
+    const barHtml = `<div style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px">
+        <span>${cal} / ${goal} cal</span>
+        <span>${Math.round(pct)}%</span>
+      </div>
+      <div class="calorie-bar"><div id="homeCalBar" class="calorie-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+    </div>`;
+    container.insertAdjacentHTML('beforeend', barHtml);
+  } else {
+    bar.style.width = pct + '%';
+    bar.style.background = barColor;
+    bar.parentElement.previousElementSibling.innerHTML = `<span>${cal} / ${goal} cal</span><span>${Math.round(pct)}%</span>`;
+  }
+}
+
 // ===== WATER =====
 function renderWater() {
   const s = getSettings();
@@ -1934,7 +2211,25 @@ function startTimerLoop() {
 }
 
 // ===== INIT =====
+// Seed baseline data if first run
+function seedBaseline() {
+  const weighIns = getWeighIns();
+  if (weighIns.length === 0) {
+    saveWeighIns([{
+      date: '2026-01-31',
+      timestamp: new Date('2026-01-31T14:56:36').getTime(),
+      weight: 172.8,
+      bodyFat: 27.5,
+      muscleMass: 119.0,
+      visceralFat: 13,
+      bmr: 1597,
+      skeletalMuscle: 46.9
+    }]);
+  }
+}
+
 function init() {
+  seedBaseline();
   renderHome();
   renderFasting();
   renderQuickPicks();
